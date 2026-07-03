@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RideDotIn Admin Panel</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f5f6f8;color:#222}.top{position:sticky;top:0;z-index:20;background:#111;color:#fff;padding:14px 16px;box-shadow:0 2px 12px #0003}.brand{font-size:21px;font-weight:800;margin-bottom:10px;color:#ffd429}.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.adminBadge{background:#fff2;color:#ffd429;border:1px solid #ffffff35;border-radius:999px;padding:10px 14px;font-weight:800}.logoutBtn{background:#fff;color:#111}input,select,textarea{padding:11px;border:1px solid #d7d7d7;border-radius:10px;background:#fff;font-size:14px}textarea{width:100%}button{border:0;border-radius:10px;padding:11px 14px;cursor:pointer;font-weight:700;background:#eaeaea}.yellow{background:#ffd429;color:#111}.green{background:#1db954;color:white}.red{background:#e63946;color:white}.blue{background:#1976d2;color:white}.dark{background:#333;color:white}.wrap{padding:16px;max-width:1350px;margin:auto}.card,.driver{background:#fff;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 3px 14px #00000012}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:14px}.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}.muted{color:#666}.small{font-size:13px}.status{border-radius:999px;padding:5px 10px;font-size:12px;text-transform:uppercase;font-weight:800}.pending{background:#fff3cd;color:#8a6500}.approved{background:#d1f7dd;color:#126b2e}.rejected{background:#ffd7dd;color:#9b1024}.banned{background:#111;color:#ffd429}.online{background:#d1f7dd;color:#126b2e}.offline{background:#eee;color:#555}.busy{background:#d7e6ff;color:#084b9a}.docs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.docBox{border:1px solid #ddd;border-radius:12px;padding:12px;background:#fafafa}.modal{display:none;position:fixed;z-index:50;inset:0;background:#0008;align-items:flex-start;justify-content:center;padding:25px;overflow:auto}.box{background:#fff;border-radius:18px;width:min(1120px,96vw);padding:20px;position:relative}.x{position:absolute;right:12px;top:12px}.formGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}.preview{width:100%;height:420px;border:1px solid #ddd;border-radius:12px;background:#f8f8f8;margin-top:12px}.pill{background:#eee;border-radius:20px;padding:4px 8px;display:inline-block}.search{min-width:260px}.help{line-height:1.5}.hidden{display:none!important}#map{height:560px;width:100%;border-radius:18px;border:1px solid #ddd;background:#e9e9e9}.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:14px}.stat{background:#fff;border-radius:16px;padding:16px;box-shadow:0 3px 14px #00000012}.stat b{font-size:26px;display:block}.mapLayout{display:grid;grid-template-columns:minmax(300px,1fr) 380px;gap:14px}.riderList{max-height:560px;overflow:auto}.riderItem{padding:12px;border-bottom:1px solid #eee;cursor:pointer}.riderItem:hover{background:#f9f9f9}@media(max-width:900px){.mapLayout{grid-template-columns:1fr}.riderList{max-height:360px}.controls input,.controls select,.controls button{width:100%}.docs{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">RideDotIn Admin Panel</div>
+    <div class="controls" id="loginControls">
+      <input id="adminUser" placeholder="Admin user ID" autocomplete="username" />
+      <input id="adminPassword" type="password" placeholder="Admin password" autocomplete="current-password" />
+      <button class="yellow" onclick="adminLogin()">Login</button>
+    </div>
+    <div class="controls hidden" id="adminActions">
+      <span id="adminUserBadge" class="adminBadge">Admin</span>
+      <input id="search" class="search" placeholder="Search name, phone, city, vehicle" />
+      <select id="status"><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="banned">Banned</option><option value="all">All</option></select>
+      <button class="blue" onclick="showDriversPage()">Rider Documents</button>
+      <button class="green" onclick="showLiveMapPage()">Live Location Map</button>
+      <button class="yellow" onclick="openNotificationPanel()">Send Notification</button>
+      <button class="dark" onclick="showLogsPage()">Admin Logs</button>
+      <button class="yellow" onclick="fitAllRiders()">Fit All Riders</button>
+      <button class="dark" onclick="openHelp()">Help</button>
+      <button class="logoutBtn" onclick="logoutAdmin()">Logout</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="card help">
+      <b>Admin use:</b> Log in with User ID and Password. After login, Rider Documents and Live Location Map will be available. The map will not auto-zoom; it will stay where you keep it.
+      <div id="msg" class="muted small"></div>
+    </div>
+
+    <section id="driversPage" class="hidden">
+      <div id="drivers" class="grid"></div>
+    </section>
+
+    <section id="logsPage" class="hidden">
+      <div class="card">
+        <h2>Admin Activity Logs</h2>
+        <p class="muted">This section shows which admin performed approve, edit, upload, ban, reject, delete, or notification actions.</p>
+        <div id="logsList">Logs loading...</div>
+      </div>
+    </section>
+
+    <section id="mapPage" class="hidden">
+      <div class="stats">
+        <div class="stat"><span>Total Approved Riders</span><b id="statApproved">0</b></div>
+        <div class="stat"><span>Total Online Riders</span><b id="statOnline">0</b></div>
+        <div class="stat"><span>Riders With Location</span><b id="statLocation">0</b></div>
+        <div class="stat"><span>Refresh</span><b>3 sec</b></div>
+      </div>
+      <div class="mapLayout">
+        <div id="map"></div>
+        <div class="card riderList" id="liveRiderList">Live riders loading...</div>
+      </div>
+    </section>
+  </div>
+
+  <div id="modal" class="modal"><div class="box"><button class="x" onclick="closeModal()">Close</button><div id="detail"></div></div></div>
+
+<script>
+const API = '/api/admin';
+let selectedDriver = null;
+let map = null;
+let markers = {};
+let infoWindow = null;
+let liveTimer = null;
+let googleMapsLoaded = false;
+let isLoggedIn = false;
+let lastLiveDrivers = [];
+let mapAutoCentered = false;
+
+function initSavedLogin(){
+  document.getElementById('adminUser').value = localStorage.getItem('rdi_admin_user') || '';
+  document.getElementById('adminPassword').value = '';
+}
+function user(){ return document.getElementById('adminUser').value.trim(); }
+function pass(){ return document.getElementById('adminPassword').value; }
+function saveLogin(){ localStorage.setItem('rdi_admin_user', user()); }
+function msg(t){ document.getElementById('msg').textContent = t || ''; }
+function notifyDone(t){
+  msg(t || 'Action completed');
+  try{
+    const n = document.createElement('div');
+    n.textContent = t || 'Action completed';
+    n.style.cssText = 'position:fixed;right:18px;bottom:18px;background:#111;color:#ffd429;padding:13px 16px;border-radius:12px;z-index:9999;box-shadow:0 4px 18px #0005;font-weight:800;';
+    document.body.appendChild(n);
+    setTimeout(()=>n.remove(), 2500);
+  }catch(e){}
+}
+function esc(v){ return String(v == null ? '' : v).replace(/[&<>\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c])); }
+function adminHeaders(){ return {'x-admin-user': user(), 'x-admin-password': pass()}; }
+
+async function request(url, options={}){
+  options.headers = options.headers || {};
+  Object.assign(options.headers, adminHeaders());
+  if(options.body && !(options.body instanceof FormData) && !options.headers['Content-Type']) options.headers['Content-Type']='application/json';
+  const res = await fetch(url, options);
+  const data = await res.json().catch(()=>({success:false,message:'Invalid server response'}));
+  if(!res.ok) throw new Error(data.message || ('HTTP '+res.status));
+  return data;
+}
+
+async function adminLogin(){
+  try{
+    saveLogin();
+    msg('Checking admin login...');
+    await request(`${API}/config`);
+    isLoggedIn = true;
+    document.getElementById('loginControls').classList.add('hidden');
+    document.getElementById('adminActions').classList.remove('hidden');
+    document.getElementById('adminUserBadge').textContent = 'Logged in: ' + user();
+    document.getElementById('driversPage').classList.remove('hidden');
+    msg('Login successful. Rider Documents and Live Location Map are now available.');
+    await loadDrivers();
+  }catch(e){
+    isLoggedIn = false;
+    document.getElementById('loginControls').classList.remove('hidden');
+    document.getElementById('adminActions').classList.add('hidden');
+    document.getElementById('driversPage').classList.add('hidden');
+    document.getElementById('mapPage').classList.add('hidden');
+  document.getElementById('logsPage').classList.add('hidden');
+    document.getElementById('logsPage').classList.add('hidden');
+    msg('Login failed: '+e.message);
+  }
+}
+function logoutAdmin(){
+  isLoggedIn = false;
+  stopLiveTimer();
+  document.getElementById('loginControls').classList.remove('hidden');
+  document.getElementById('adminActions').classList.add('hidden');
+  document.getElementById('driversPage').classList.add('hidden');
+  document.getElementById('mapPage').classList.add('hidden');
+  document.getElementById('adminUser').value = '';
+  document.getElementById('adminPassword').value = '';
+  localStorage.removeItem('rdi_admin_user');
+  localStorage.removeItem('rdi_admin_password');
+  msg('Logged out. User ID aur password clear ho gaya.');
+}
+function requireLogin(){
+  if(!isLoggedIn){ msg('Please log in with admin User ID and Password first.'); return false; }
+  return true;
+}
+function showDriversPage(){
+  if(!requireLogin()) return;
+  stopLiveTimer();
+  document.getElementById('driversPage').classList.remove('hidden');
+  document.getElementById('mapPage').classList.add('hidden');
+  document.getElementById('logsPage').classList.add('hidden');
+  loadDrivers();
+}
+async function showLiveMapPage(){
+  if(!requireLogin()) return;
+  saveLogin();
+  document.getElementById('driversPage').classList.add('hidden');
+  document.getElementById('logsPage').classList.add('hidden');
+  document.getElementById('mapPage').classList.remove('hidden');
+  await initMap();
+  await updateLiveMap();
+  stopLiveTimer();
+  liveTimer = setInterval(updateLiveMap, 3000);
+}
+function stopLiveTimer(){ if(liveTimer){ clearInterval(liveTimer); liveTimer = null; } }
+
+async function showLogsPage(){
+  if(!requireLogin()) return;
+  stopLiveTimer();
+  document.getElementById('driversPage').classList.add('hidden');
+  document.getElementById('mapPage').classList.add('hidden');
+  document.getElementById('logsPage').classList.remove('hidden');
+  await loadLogs();
+}
+async function loadLogs(){
+  try{
+    const data = await request(`${API}/logs`);
+    const html = (data.logs || []).map(l => `
+      <div class="driver">
+        <div><b>${esc(l.action)}</b> <span class="pill">${esc(l.adminUser || 'admin')}</span></div>
+        <div class="small muted">${l.createdAt ? new Date(l.createdAt).toLocaleString() : ''}</div>
+        <div>${esc(l.details || '')}</div>
+        <div class="small muted">${esc(l.driverName || '')} ${l.driverPhone ? '• '+esc(l.driverPhone) : ''}</div>
+      </div>`).join('') || '<div class="muted">No admin logs yet.</div>';
+    document.getElementById('logsList').innerHTML = html;
+    msg(`Loaded ${data.count || 0} admin log(s).`);
+  }catch(e){ msg('Logs error: '+e.message); }
+}
+function openNotificationPanel(driverId=''){
+  if(!requireLogin()) return;
+  document.getElementById('detail').innerHTML = `
+    <h2>Send Notification</h2>
+    <p class="muted">Blank Driver ID ka matlab notification sab riders ko jayega.</p>
+    <label>Driver ID optional<input id="n_driverId" value="${esc(driverId)}" placeholder="Specific driver ID or blank for all"></label><br><br>
+    <label>Title<input id="n_title" value="RideDotIn Notice"></label><br><br>
+    <label>Message<textarea id="n_message" rows="5" placeholder="Notification message"></textarea></label>
+    <div class="row"><button class="yellow" onclick="sendNotification()">Send Notification</button></div>
+  `;
+  document.getElementById('modal').style.display='flex';
+}
+async function sendNotification(){
+  const body = {
+    driverId: document.getElementById('n_driverId').value.trim(),
+    title: document.getElementById('n_title').value.trim(),
+    message: document.getElementById('n_message').value.trim()
+  };
+  if(!body.message) return alert('Message required');
+  try{
+    await request(`${API}/notification`, {method:'POST', body:JSON.stringify(body)});
+    closeModal();
+    notifyDone('Notification sent by '+user());
+  }catch(e){ alert(e.message); }
+}
+
+
+function docLink(label, doc){
+  if(!doc) return '';
+  const n = esc(doc.number || '-');
+  const u = doc.fileUrl || '';
+  return `<div><b>${label}:</b> ${n}<br>${u ? `<a href="${esc(u)}" target="_blank">View ${label}</a>` : '<span class="muted">No file</span>'}</div>`;
+}
+function driverCard(d){
+  const st = d.approvalStatus || 'pending';
+  return `<div class="driver" id="driver-${esc(d._id)}">
+    <div><b>${esc(d.name || 'Rider')}</b> <span class="status ${esc(st)}">${esc(st)}</span></div>
+    <div class="small muted">${esc(d.phone || '')} • ${esc(d.city || '')}, ${esc(d.state || '')}</div>
+    <div class="small">Email: ${esc(d.email || '-')} | Age: ${esc(d.age || '-')}</div>
+    <div class="small">Address: ${esc(d.address || '-')}</div>
+    <div>Vehicle: <b>${esc(d.vehicleNumber || '-')}</b> (${esc(d.vehicleType || 'Bike')})</div>
+    <div class="small">Secret Code: <b>${d.secretCodeSet ? 'SET' : 'NOT SET'}</b> ${d.secretCodeResetRequested ? '<span class="status pending">RESET REQUEST</span>' : ''}</div>
+    <div class="docs small">
+      ${docLink('RC', d.documents && d.documents.rc)}
+      ${docLink('PAN', d.documents && d.documents.pan)}
+      ${docLink('Aadhaar', d.documents && d.documents.aadhaar)}
+      ${docLink('DL', d.documents && d.documents.dl)}
+    </div>
+    <div class="small muted">Remark: ${esc(d.adminRemark || '-')}</div>
+    <div class="row">
+      <button class="green" onclick="approve('${esc(d._id)}')">Approve</button>
+      <button class="red" onclick="rejectDriver('${esc(d._id)}')">Reject</button>
+      <button class="dark" onclick="banDriver('${esc(d._id)}')">Ban</button>
+      <button class="blue" onclick="unbanDriver('${esc(d._id)}')">Unban</button>
+      <button class="yellow" onclick="details('${esc(d._id)}')">View / Edit / Upload</button>
+      <button class="blue" onclick="quickSetSecretCode('${esc(d._id)}')">Set Code</button>
+      <button class="green" onclick="sendSecretCodeToApp('${esc(d._id)}', false)">Send to App View</button>
+      <button class="green" onclick="sendSecretCode('${esc(d._id)}', false)">Send Code</button>
+      ${d.secretCodeResetRequested ? `<button class="red" onclick="sendSecretCode('${esc(d._id)}', true)">Generate & Send</button>` : ''}
+      <button class="yellow" onclick="openNotificationPanel('${esc(d._id)}')">Notify</button>
+      <button onclick="deleteDriver('${esc(d._id)}')">Delete</button>
+    </div>
+  </div>`;
+}
+async function loadDrivers(){
+  try{
+    saveLogin();
+    msg('Loading riders...');
+    const status = document.getElementById('status').value;
+    const search = document.getElementById('search').value.trim();
+    const data = await request(`${API}/drivers?status=${encodeURIComponent(status)}&search=${encodeURIComponent(search)}`);
+    document.getElementById('drivers').innerHTML = data.drivers.map(driverCard).join('') || '<div class="card">No riders found.</div>';
+    msg(`Loaded ${data.count} rider(s)`);
+  }catch(e){ msg('Error: '+e.message); }
+}
+async function approve(id){
+  const remark = prompt('Approve remark:', 'Documents verified') || 'Documents verified';
+  try{
+    await request(`${API}/driver/${id}/approve`, {method:'POST', body:JSON.stringify({remark})});
+    closeModal();
+    await loadDrivers();
+    notifyDone('Rider approved successfully');
+  }catch(e){ alert(e.message); }
+}
+async function rejectDriver(id){
+  const remark = prompt('Reject reason:', 'Documents not valid');
+  if(remark === null) return;
+  try{
+    await request(`${API}/driver/${id}/reject`, {method:'POST', body:JSON.stringify({remark})});
+    closeModal();
+    await loadDrivers();
+    notifyDone('Rider rejected successfully');
+  }catch(e){ alert(e.message); }
+}
+
+async function banDriver(id){
+  const reason = prompt('Ban reason:', 'Policy violation');
+  if(reason === null) return;
+  try{
+    await request(`${API}/driver/${id}/ban`, {method:'POST', body:JSON.stringify({reason})});
+    closeModal();
+    await loadDrivers();
+    notifyDone('Rider banned successfully');
+  }catch(e){ alert(e.message); }
+}
+async function unbanDriver(id){
+  const remark = prompt('Unban remark:', 'Unbanned by admin') || 'Unbanned by admin';
+  try{
+    await request(`${API}/driver/${id}/unban`, {method:'POST', body:JSON.stringify({remark})});
+    closeModal();
+    await loadDrivers();
+    notifyDone('Rider unbanned successfully');
+  }catch(e){ alert(e.message); }
+}
+
+async function deleteDriver(id){
+  if(!confirm('Delete this rider permanently?')) return;
+  try{
+    await request(`${API}/driver/${id}`, {method:'DELETE'});
+    closeModal();
+    await loadDrivers();
+    notifyDone('Rider deleted successfully');
+  }catch(e){ alert(e.message); }
+}
+async function details(id){
+  try{
+    const data = await request(`${API}/driver/${id}`);
+    selectedDriver = data.driver;
+    renderDetail(data.driver);
+    document.getElementById('modal').style.display='flex';
+  }catch(e){ alert(e.message); }
+}
+function renderDocBox(type,label,doc){
+  doc = doc || {};
+  const inputId = `file_${type}`;
+  return `<div class="docBox">
+    <b>${label}</b> <span class="pill">${esc(doc.number || 'No number')}</span><br>
+    ${doc.fileUrl ? `<a href="${esc(doc.fileUrl)}" target="_blank">Open document</a> <button class="yellow" onclick="previewDoc('${esc(doc.fileUrl)}')">Preview</button>` : '<span class="muted">No file uploaded</span>'}
+    <div class="small muted">${esc(doc.originalName || '')}</div>
+    <hr>
+    <div class="small"><b>Upload / Replace ${label}</b></div>
+    <input id="${inputId}" type="file" accept="image/*,application/pdf" />
+    <div class="small muted">Allowed: JPG, PNG, WEBP, PDF. Max file size: 25MB.</div>
+    <button class="blue" onclick="uploadDoc('${type}')">Upload ${label}</button>
+  </div>`;
+}
+function renderDetail(d){
+  const docs = d.documents || {};
+  document.getElementById('detail').innerHTML = `
+    <h2>View / Edit / Upload Rider</h2>
+    <div class="small muted">Driver ID: ${esc(d._id)}</div>
+    <div class="card" style="background:#fff9d8;border:1px solid #ffe48a">
+      <h3>Secret Code Login</h3>
+      <div class="small">Status: <b>${d.secretCodeSet ? 'Code set' : 'Code not set'}</b> ${d.secretCodeMasked ? '('+esc(d.secretCodeMasked)+')' : ''}</div>
+      <div class="small">${d.secretCodeResetRequested ? '<span class="status pending">Driver reset code request pending</span>' : '<span class="muted">No reset request</span>'}</div>
+      <div class="small">Last sent: <b>${d.secretCodeLastSentAt ? new Date(d.secretCodeLastSentAt).toLocaleString() : 'Not sent yet'}</b></div>
+      <div class="small">App view status: <b>${d.secretCodeSentToApp ? 'Sent to app - waiting for driver view' : 'Not sent to app'}</b></div>
+      <div class="row">
+        <input id="secretCodeInput" placeholder="Enter new secret code or leave blank for auto code" style="min-width:280px">
+        <button class="blue" onclick="setSecretCode('${esc(d._id)}')">Set / Reset Code</button>
+        <button class="green" onclick="sendSecretCodeToApp('${esc(d._id)}', false)">Send to App View</button>
+        <button class="green" onclick="sendSecretCode('${esc(d._id)}', false)">Send Code to Driver</button>
+        <button class="red" onclick="sendSecretCode('${esc(d._id)}', true)">Generate & Send New</button>
+        <button class="yellow" onclick="clearSecretRequest('${esc(d._id)}')">Clear Request</button>
+      </div>
+      <div class="small muted">Use Send to App View to make the code visible on the driver Secret Code page. Use Send Code for WhatsApp/SMS options.</div>
+    </div>
+    <h3>Documents View & Upload</h3>
+    <div class="docs">
+      ${renderDocBox('aadhaar','Aadhaar', docs.aadhaar)}
+      ${renderDocBox('pan','PAN', docs.pan)}
+      ${renderDocBox('rc','RC', docs.rc)}
+      ${renderDocBox('dl','DL', docs.dl)}
+    </div>
+    <iframe id="docPreview" class="preview" title="Document preview"></iframe>
+    <h3>Edit Details</h3>
+    <div class="formGrid">
+      <label>Name<input id="e_name" value="${esc(d.name)}"></label>
+      <label>Phone<input id="e_phone" value="${esc(d.phone)}" disabled></label>
+      <label>Email<input id="e_email" value="${esc(d.email)}"></label>
+      <label>Age<input id="e_age" type="number" value="${esc(d.age || '')}"></label>
+      <label>Address<textarea id="e_address" rows="2">${esc(d.address)}</textarea></label>
+      <label>City<input id="e_city" value="${esc(d.city)}"></label>
+      <label>State<input id="e_state" value="${esc(d.state)}"></label>
+      <label>Vehicle No.<input id="e_vehicle" value="${esc(d.vehicleNumber)}"></label>
+      <label>Vehicle Type<input id="e_vehicleType" value="${esc(d.vehicleType || 'Bike')}"></label>
+      <label>Status<select id="e_status"><option value="pending">pending</option><option value="approved">approved</option><option value="rejected">rejected</option><option value="banned">banned</option></select></label>
+      <label>Admin Remark<textarea id="e_remark" rows="2">${esc(d.adminRemark)}</textarea></label>
+      <label>Aadhaar No.<input id="e_aadhaar" value="${esc(docs.aadhaar && docs.aadhaar.number)}"></label>
+      <label>PAN No.<input id="e_pan" value="${esc(docs.pan && docs.pan.number)}"></label>
+      <label>RC No.<input id="e_rc" value="${esc(docs.rc && docs.rc.number)}"></label>
+      <label>DL No.<input id="e_dl" value="${esc(docs.dl && docs.dl.number)}"></label>
+    </div>
+    <div class="row">
+      <button class="green" onclick="saveEdit('${esc(d._id)}')">Save Edit</button>
+      <button class="green" onclick="approve('${esc(d._id)}')">Approve</button>
+      <button class="red" onclick="rejectDriver('${esc(d._id)}')">Reject</button>
+      <button class="dark" onclick="banDriver('${esc(d._id)}')">Ban</button>
+      <button class="blue" onclick="unbanDriver('${esc(d._id)}')">Unban</button>
+      <button class="yellow" onclick="openNotificationPanel('${esc(d._id)}')">Notify Rider</button>
+    </div>
+  `;
+  document.getElementById('e_status').value = d.approvalStatus || 'pending';
+}
+function previewDoc(url){ document.getElementById('docPreview').src = url; }
+async function uploadDoc(type){
+  if(!selectedDriver) return alert('Rider not selected');
+  const input = document.getElementById(`file_${type}`);
+  if(!input || !input.files || !input.files[0]) return alert('Please choose a file first.');
+  const file = input.files[0];
+  if(file.size > 25 * 1024 * 1024) return alert('File size is more than 25MB. Please compress it and upload again.');
+  const numberMap = {aadhaar:'e_aadhaar', pan:'e_pan', rc:'e_rc', dl:'e_dl'};
+  const fd = new FormData();
+  fd.append('documentFile', file);
+  fd.append('documentNumber', document.getElementById(numberMap[type]).value || '');
+  try{
+    msg(`Uploading ${type.toUpperCase()}...`);
+    const res = await fetch(`${API}/driver/${selectedDriver._id}/document/${type}`, {method:'POST', headers: adminHeaders(), body: fd});
+    const data = await res.json().catch(()=>({success:false,message:'Invalid server response'}));
+    if(!res.ok) throw new Error(data.message || ('HTTP '+res.status));
+    selectedDriver = data.driver;
+    closeModal();
+    await loadDrivers();
+    notifyDone(`${type.toUpperCase()} uploaded successfully`);
+  }catch(e){ alert(e.message); msg('Upload error: '+e.message); }
+}
+
+
+
+async function sendSecretCodeToApp(id, generateNew){
+  try{
+    const confirmText = generateNew
+      ? 'Generate a new secret code and make it visible on the driver Secret Code page?'
+      : 'Make the current secret code visible on the driver Secret Code page?';
+    if(!confirm(confirmText)) return;
+
+    const data = await request(`${API}/driver/${id}/secret-code/send`, {
+      method:'POST',
+      body:JSON.stringify({generateNew: !!generateNew, appOnly: true})
+    });
+
+    await loadDrivers();
+    notifyDone('Secret code is now visible on the driver Secret Code page.');
+    alert('Secret code is now visible on the driver Secret Code page.');
+  }catch(e){
+    alert('Send to app failed: ' + e.message);
+  }
+}
+
+
+async function sendSecretCode(id, generateNew){
+  try{
+    const confirmText = generateNew
+      ? 'Generate a new secret code and send it to the driver?'
+      : 'Send the current secret code to the driver?';
+    if(!confirm(confirmText)) return;
+
+    const data = await request(`${API}/driver/${id}/secret-code/send`, {
+      method:'POST',
+      body:JSON.stringify({generateNew: !!generateNew})
+    });
+
+    const msgText = data.sendText || (`RideDotIn Secret Code: ${data.secretCode || ''}`);
+    try{ await navigator.clipboard.writeText(msgText); }catch(e){}
+
+    let action = 'Secret code is ready to send.';
+    if(data.whatsappUrl && confirm('The secret code message is ready. Open WhatsApp now?')){
+      window.open(data.whatsappUrl, '_blank');
+      action += ' WhatsApp link opened.';
+    } else if(data.smsUrl && confirm('WhatsApp was not opened. Open the SMS app?')){
+      window.open(data.smsUrl, '_blank');
+      action += ' SMS link opened.';
+    } else {
+      alert('Secret code message copied:\\n\\n' + msgText);
+      action += ' Message copied.';
+    }
+
+    await loadDrivers();
+    notifyDone(action);
+  }catch(e){
+    alert('Secret code send failed: ' + e.message);
+  }
+}
+
+
+async function quickSetSecretCode(id){
+  const code = prompt('Enter a new secret code. Leave blank to auto-generate a 6-digit code:', '');
+  if(code === null) return;
+  try{
+    const data = await request(`${API}/driver/${id}/secret-code`, {method:'POST', body:JSON.stringify({secretCode: code})});
+    await loadDrivers();
+    alert('Secret code set: ' + (data.secretCode || code || 'auto'));
+    notifyDone('Secret code set/reset successfully..');
+  }catch(e){ alert(e.message); }
+}
+
+async function setSecretCode(id){
+  const el = document.getElementById('secretCodeInput');
+  const code = el ? el.value.trim() : '';
+  try{
+    const data = await request(`${API}/driver/${id}/secret-code`, {method:'POST', body:JSON.stringify({secretCode: code})});
+    alert('Secret code set: ' + (data.secretCode || code || 'auto'));
+    closeModal();
+    await loadDrivers();
+    notifyDone('Secret code set/reset successfully..');
+  }catch(e){ alert(e.message); }
+}
+
+async function clearSecretRequest(id){
+  try{
+    await request(`${API}/driver/${id}/secret-code/clear-request`, {method:'POST', body:JSON.stringify({})});
+    closeModal();
+    await loadDrivers();
+    notifyDone('Secret code reset request cleared');
+  }catch(e){ alert(e.message); }
+}
+
+
+async function saveEdit(id){
+  const body = {
+    name: document.getElementById('e_name').value,
+    email: document.getElementById('e_email').value,
+    age: document.getElementById('e_age').value,
+    address: document.getElementById('e_address').value,
+    city: document.getElementById('e_city').value,
+    state: document.getElementById('e_state').value,
+    vehicleNumber: document.getElementById('e_vehicle').value,
+    vehicleType: document.getElementById('e_vehicleType').value,
+    approvalStatus: document.getElementById('e_status').value,
+    adminRemark: document.getElementById('e_remark').value,
+    documents: {
+      aadhaar: { number: document.getElementById('e_aadhaar').value },
+      pan: { number: document.getElementById('e_pan').value },
+      rc: { number: document.getElementById('e_rc').value },
+      dl: { number: document.getElementById('e_dl').value }
+    }
+  };
+  try{
+    const data = await request(`${API}/driver/${id}`, {method:'PUT', body:JSON.stringify(body)});
+    selectedDriver = data.driver;
+    closeModal();
+    await loadDrivers();
+    notifyDone('Saved successfully');
+  }catch(e){ alert(e.message); }
+}
+
+async function loadGoogleMaps(){
+  if(googleMapsLoaded || window.google) { googleMapsLoaded = true; return; }
+  const cfg = await request(`${API}/config`);
+  if(!cfg.googleMapsApiKey){
+    msg('Google Map key missing. Render Environment me GOOGLE_MAPS_API_KEY add please. List phir bhi update will be available.');
+    return;
+  }
+  await new Promise((resolve, reject) => {
+    window._rdiMapLoaded = () => { googleMapsLoaded = true; resolve(); };
+    const s = document.createElement('script');
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(cfg.googleMapsApiKey)}&callback=_rdiMapLoaded`;
+    s.async = true; s.defer = true; s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+async function initMap(){
+  try{
+    await loadGoogleMaps();
+    if(!window.google) return;
+    if(!map){
+      map = new google.maps.Map(document.getElementById('map'), {center:{lat:22.9734,lng:78.6569}, zoom:5});
+      infoWindow = new google.maps.InfoWindow();
+    }
+  }catch(e){ msg('Map load error: '+e.message); }
+}
+function markerIcon(d){
+  return d.isOnline ? 'http://maps.google.com/mapfiles/ms/icons/green-dot.png' : 'http://maps.google.com/mapfiles/ms/icons/red-dot.png';
+}
+async function updateLiveMap(){
+  try{
+    const data = await request(`${API}/live-drivers`);
+    document.getElementById('statApproved').textContent = data.totalApproved || 0;
+    document.getElementById('statOnline').textContent = data.totalOnline || 0;
+    document.getElementById('statLocation').textContent = data.totalWithLocation || 0;
+    lastLiveDrivers = data.drivers || [];
+    renderLiveList(lastLiveDrivers);
+    if(window.google && map) { renderMarkers(lastLiveDrivers); autoCenterOnFirstRider(lastLiveDrivers); }
+    msg(`Live map updated: ${new Date().toLocaleTimeString()}`);
+  }catch(e){ msg('Live map error: '+e.message); }
+}
+
+function autoCenterOnFirstRider(drivers){
+  if(mapAutoCentered || !window.google || !map) return;
+  const online = (drivers || []).find(d => d.isOnline && d.hasLocation && d.latitude && d.longitude);
+  const any = online || (drivers || []).find(d => d.hasLocation && d.latitude && d.longitude);
+  if(!any) return;
+  const pos = {lat:Number(any.latitude), lng:Number(any.longitude)};
+  map.setCenter(pos);
+  map.setZoom(15);
+  mapAutoCentered = true;
+  msg(`Map ${any.name || 'rider'} ke location par open ho gaya.`);
+}
+
+function renderMarkers(drivers){
+  const bounds = new google.maps.LatLngBounds();
+  let hasAny = false;
+  const seen = new Set();
+  drivers.forEach(d => {
+    if(!d.hasLocation || !d.latitude || !d.longitude) return;
+    seen.add(d._id);
+    const pos = {lat:Number(d.latitude), lng:Number(d.longitude)};
+    const title = `${d.name || 'Rider'} - ${d.phone || ''}`;
+    if(!markers[d._id]){
+      markers[d._id] = new google.maps.Marker({position:pos, map, title, icon:markerIcon(d)});
+      markers[d._id].addListener('click', () => showMarkerInfo(d));
+    }else{
+      markers[d._id].setPosition(pos);
+      markers[d._id].setTitle(title);
+      markers[d._id].setIcon(markerIcon(d));
+    }
+    markers[d._id]._driver = d;
+    bounds.extend(pos); hasAny = true;
+  });
+  Object.keys(markers).forEach(id => { if(!seen.has(id)){ markers[id].setMap(null); delete markers[id]; } });
+}
+function fitAllRiders(){
+  if(!window.google || !map) return msg('Map abhi load not hua.');
+  const bounds = new google.maps.LatLngBounds();
+  let hasAny = false;
+  Object.values(markers).forEach(m => { if(m && m.getPosition){ bounds.extend(m.getPosition()); hasAny = true; } });
+  if(hasAny){ map.fitBounds(bounds); mapAutoCentered = true; msg('All riders view set ho gaya. Ab 3 sec refresh ke baad bhi zoom same rahega.'); }
+  else msg('Koi rider location available not hai.');
+}
+function showMarkerInfo(d){
+  const html = `<b>${esc(d.name || 'Rider')}</b><br>${esc(d.phone || '')}<br>${esc(d.vehicleNumber || '-')}<br>Status: ${esc(d.status || '')}<br>Online: ${d.isOnline ? 'Yes' : 'No'}<br>Last: ${d.lastLocationAt ? new Date(d.lastLocationAt).toLocaleString() : '-'}`;
+  infoWindow.setContent(html);
+  infoWindow.open(map, markers[d._id]);
+}
+function renderLiveList(drivers){
+  const html = drivers.map(d => {
+    const stateClass = d.isOnline ? 'online' : 'offline';
+    return `<div class="riderItem" onclick="focusRider('${esc(d._id)}')">
+      <b>${esc(d.name || 'Rider')}</b> <span class="status ${stateClass}">${d.isOnline ? 'ONLINE' : 'OFFLINE'}</span><br>
+      <span class="small muted">${esc(d.phone || '')} • ${esc(d.vehicleNumber || '-')} • ${esc(d.city || '')}</span><br>
+      <span class="small">Status: ${esc(d.status || '-')} | Location: ${d.hasLocation ? `${Number(d.latitude).toFixed(5)}, ${Number(d.longitude).toFixed(5)}` : 'No location yet'}</span><br>
+      <span class="small muted">Last update: ${d.lastLocationAt ? new Date(d.lastLocationAt).toLocaleString() : '-'}</span>
+    </div>`;
+  }).join('') || '<div class="muted">No approved rider found.</div>';
+  document.getElementById('liveRiderList').innerHTML = html;
+}
+function focusRider(id){
+  if(markers[id] && map){
+    map.setCenter(markers[id].getPosition());
+    map.setZoom(16);
+    showMarkerInfo(markers[id]._driver);
+  }
+}
+function openHelp(){
+  document.getElementById('detail').innerHTML = `<h2>Help</h2><p><b>Rider Documents:</b> Pending registration open karke Aadhaar/PAN/RC/DL documents view, preview, edit, upload/replace kar sakte ho. File limit 25MB per document hai.</p><p><b>Live Location Map:</b> Approved riders ka location map me will be shown. Driver app jab online will be available aur location update sendega, admin panel har 3 second me map/list refresh will do.</p><p><b>Admin login:</b> Render Environment me <code>ADMIN_USER</code> aur <code>ADMIN_PASSWORD</code> set please.</p><p><b>Notifications:</b> Admin panel se all riders ya specific rider ko notification send sakte ho.</p><p><b>Admin Logs:</b> Approve/Edit/Upload/Ban/Reject/Delete/Notification action admin username ke saath save will be available.</p><p><b>Ban:</b> Banned rider login/online not kar payega.</p><p><b>Support Email:</b> support@ridedotin.com<br><b>Support Mobile:</b> +91 90000 00000</p>`;
+  document.getElementById('modal').style.display='flex';
+}
+function closeModal(){ document.getElementById('modal').style.display='none'; }
+document.getElementById('search').addEventListener('keydown', e => { if(e.key==='Enter') loadDrivers(); });
+document.getElementById('adminPassword').addEventListener('keydown', e => { if(e.key==='Enter') adminLogin(); });
+initSavedLogin();
+msg('Admin User ID aur Password dalke Login please.');
+</script>
+</body>
+</html>

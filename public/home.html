@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RideDotIn - Bike, E-Riksha & Bike Lite Rides</title>
+  <meta name="description" content="RideDotIn is a modern ride booking platform for bike, e-riksha and bike lite rides with live tracking, safety support and rider earning options." />
+  <style>
+    :root{
+      --yellow:#ffd429;
+      --yellow-dark:#f2bd00;
+      --ink:#151515;
+      --muted:#666b73;
+      --soft:#fff8d8;
+      --line:#ececec;
+      --green:#17a55b;
+      --shadow:0 22px 60px rgba(0,0,0,.12);
+      --radius:28px;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;font-family:Inter,Arial,Helvetica,sans-serif;color:var(--ink);background:#fff;line-height:1.55;overflow-x:hidden}
+    a{text-decoration:none;color:inherit}
+    .container{width:min(1180px,92vw);margin:auto}
+    .nav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.86);backdrop-filter:blur(16px);border-bottom:1px solid rgba(0,0,0,.06)}
+    .navInner{height:76px;display:flex;align-items:center;justify-content:space-between;gap:18px}
+    .logo{display:flex;align-items:center;gap:11px;font-weight:900;font-size:24px;letter-spacing:-.5px}
+    .logoMark{width:42px;height:42px;border-radius:14px;background:var(--yellow);display:grid;place-items:center;box-shadow:0 8px 24px rgba(255,212,41,.55);font-size:22px}
+    .links{display:flex;align-items:center;gap:26px;font-weight:800;color:#2a2a2a;font-size:14px}
+    .links a:hover{color:#000}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;border:0;border-radius:999px;padding:14px 22px;font-weight:900;cursor:pointer;transition:.22s ease;white-space:nowrap}
+    .btnPrimary{background:var(--yellow);color:#111;box-shadow:0 12px 26px rgba(255,212,41,.38)}
+    .btnPrimary:hover{transform:translateY(-2px);background:var(--yellow-dark)}
+    .btnDark{background:#111;color:#fff}.btnDark:hover{transform:translateY(-2px);background:#2b2b2b}
+    .btnGhost{border:1px solid #ddd;background:#fff;color:#111}.btnGhost:hover{border-color:#111;transform:translateY(-2px)}
+    .menuBtn{display:none;background:#111;color:#fff;border:0;border-radius:13px;padding:11px 13px;font-weight:900}
+
+    .hero{position:relative;isolation:isolate;background:linear-gradient(135deg,#fff 0%,#fff8d8 46%,#ffe477 100%);padding:74px 0 84px;border-bottom-left-radius:48px;border-bottom-right-radius:48px;overflow:hidden}
+    .hero:before{content:"";position:absolute;right:-120px;top:10px;width:470px;height:470px;border-radius:50%;background:rgba(255,255,255,.45);z-index:-1}
+    .heroGrid{display:grid;grid-template-columns:1.05fr .95fr;gap:42px;align-items:center}
+    .badge{display:inline-flex;align-items:center;gap:9px;background:#111;color:#fff;border-radius:999px;padding:9px 14px;font-weight:900;font-size:13px;box-shadow:0 12px 28px rgba(0,0,0,.16)}
+    .hero h1{font-size:clamp(40px,6vw,76px);line-height:.98;margin:22px 0 18px;letter-spacing:-3px}
+    .hero p{font-size:clamp(17px,2.2vw,21px);color:#3b3b3b;margin:0 0 28px;max-width:650px}
+    .heroActions{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+    .trustRow{display:flex;gap:22px;flex-wrap:wrap;margin-top:30px}
+    .trustItem b{display:block;font-size:26px}.trustItem span{font-weight:800;color:#565656;font-size:13px}
+
+    .phoneScene{position:relative;min-height:560px;display:grid;place-items:center}
+    .phone{width:min(330px,86vw);background:#111;border-radius:42px;padding:12px;box-shadow:var(--shadow);transform:rotate(-4deg);position:relative;z-index:2}
+    .screen{background:#f7f7f7;border-radius:32px;overflow:hidden;min-height:640px;border:1px solid rgba(255,255,255,.08)}
+    .mapTop{height:250px;background:radial-gradient(circle at 30% 20%,#ffef96,transparent 28%),linear-gradient(135deg,#e9f2ff,#f9f9f9);position:relative;overflow:hidden}
+    .road{position:absolute;height:18px;background:#fff;border-radius:999px;box-shadow:0 5px 18px #0001}.road.r1{width:230px;left:38px;top:70px;transform:rotate(28deg)}.road.r2{width:260px;right:-35px;top:150px;transform:rotate(-18deg)}.road.r3{width:170px;left:-20px;bottom:42px;transform:rotate(-10deg)}
+    .pin{position:absolute;width:42px;height:42px;border-radius:50% 50% 50% 10px;transform:rotate(-45deg);display:grid;place-items:center;background:#111;box-shadow:0 12px 24px #0003}.pin:after{content:"";width:14px;height:14px;border-radius:50%;background:var(--yellow)}.pin.p1{left:74px;top:82px}.pin.p2{right:62px;bottom:54px;background:var(--yellow)}.pin.p2:after{background:#111}
+    .rideCard{margin:-28px 18px 0;background:#fff;border-radius:26px;padding:18px;box-shadow:0 16px 34px #00000018;position:relative;z-index:3}
+    .fromTo{display:grid;gap:12px;margin-bottom:16px}.field{display:flex;align-items:center;gap:10px;background:#f5f5f5;border-radius:16px;padding:13px 14px;font-weight:800;color:#333}.dot{width:10px;height:10px;border-radius:50%;background:var(--green)}.dot.end{background:#e34040}
+    .option{display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid #eee;border-radius:18px;padding:12px 13px;margin:9px 0}.vehicle{display:flex;align-items:center;gap:11px;font-weight:900}.vehicleIcon{width:42px;height:42px;border-radius:15px;background:var(--soft);display:grid;place-items:center;font-size:23px}.price{font-weight:900}.miniBtn{width:100%;border:0;background:#111;color:#fff;border-radius:18px;padding:14px;margin-top:12px;font-weight:900;font-size:15px}
+    .float{position:absolute;background:#fff;border-radius:22px;padding:15px 16px;box-shadow:0 18px 42px #00000018;font-weight:900;z-index:3}.float small{display:block;color:var(--muted);font-weight:800}.float.one{left:0;top:70px}.float.two{right:0;bottom:80px}.float.three{left:28px;bottom:38px;background:#111;color:#fff}.float.three small{color:#ffd429}
+
+    .section{padding:86px 0}.sectionHead{max-width:760px;margin:0 auto 38px;text-align:center}.eyebrow{color:#a27d00;font-weight:950;letter-spacing:.12em;text-transform:uppercase;font-size:12px}.section h2{font-size:clamp(30px,4vw,50px);line-height:1.08;margin:10px 0 12px;letter-spacing:-1.6px}.sectionHead p{font-size:18px;color:var(--muted);margin:0}
+    .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}.card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:28px;box-shadow:0 10px 35px #00000008;transition:.22s ease}.card:hover{transform:translateY(-5px);box-shadow:var(--shadow)}.cardIcon{width:64px;height:64px;border-radius:22px;background:var(--soft);display:grid;place-items:center;font-size:30px;margin-bottom:22px}.card h3{font-size:24px;margin:0 0 10px}.card p{margin:0;color:var(--muted)}
+
+    .booking{background:#101010;color:#fff;border-radius:44px;padding:44px;display:grid;grid-template-columns:.95fr 1.05fr;gap:28px;align-items:center;box-shadow:var(--shadow)}
+    .booking h2{color:#fff}.booking p{color:#d7d7d7}.bookingPanel{background:#fff;color:#111;border-radius:30px;padding:24px}.bookingPanel label{display:block;font-weight:900;margin-bottom:8px}.bookingPanel input,.bookingPanel select{width:100%;border:1px solid #e1e1e1;border-radius:16px;padding:15px 14px;margin-bottom:14px;font-size:15px;background:#fafafa}.bookingPanel button{width:100%;margin-top:4px}.fareBox{display:none;background:#fff8d8;border:1px dashed #d4aa00;border-radius:18px;padding:14px;margin-top:12px;font-weight:900}
+
+    .wide{background:#fff8d8;border-radius:44px;padding:46px;display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:center}.wideArt{min-height:300px;border-radius:34px;background:linear-gradient(135deg,#111,#333);position:relative;overflow:hidden;box-shadow:var(--shadow)}.wideArt:before{content:"";position:absolute;inset:40px;border:2px dashed rgba(255,212,41,.55);border-radius:40px}.bike{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:112px}.earnList{display:grid;gap:14px;margin-top:22px}.tick{display:flex;gap:12px;align-items:flex-start;font-weight:900}.tick span{width:28px;height:28px;border-radius:50%;background:#111;color:#ffd429;display:grid;place-items:center;flex:0 0 auto}
+
+    .download{background:#111;color:#fff;border-radius:44px;padding:48px;text-align:center;position:relative;overflow:hidden}.download:before{content:"";position:absolute;left:-100px;bottom:-140px;width:360px;height:360px;border-radius:50%;background:rgba(255,212,41,.18)}.download h2{color:#fff;margin-top:0}.storeBtns{display:flex;justify-content:center;gap:14px;flex-wrap:wrap;margin-top:24px}.store{background:#fff;color:#111;border-radius:18px;padding:14px 20px;font-weight:950;display:flex;align-items:center;gap:10px;min-width:180px;justify-content:center}
+
+    .footer{background:#0d0d0d;color:#fff;padding:44px 0 26px;margin-top:70px}.footerGrid{display:grid;grid-template-columns:1.2fr .8fr .8fr;gap:28px}.footer a{color:#d7d7d7;display:block;margin:9px 0}.footer p{color:#bdbdbd}.copy{border-top:1px solid #ffffff1c;margin-top:30px;padding-top:20px;color:#a9a9a9;font-size:14px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:#111;color:#ffd429;padding:13px 17px;border-radius:16px;font-weight:900;box-shadow:0 14px 34px #0004;opacity:0;pointer-events:none;transition:.2s;z-index:100}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+    @media(max-width:920px){.links{display:none;position:absolute;top:76px;left:0;right:0;background:#fff;padding:18px 5vw;border-bottom:1px solid #eee;box-shadow:0 16px 28px #00000012}.links.open{display:grid;gap:16px}.menuBtn{display:block}.heroGrid,.booking,.wide{grid-template-columns:1fr}.hero{padding-top:38px}.phoneScene{min-height:520px}.float{display:none}.cards{grid-template-columns:1fr}.footerGrid{grid-template-columns:1fr}.booking,.wide,.download{border-radius:30px;padding:28px}.hero h1{letter-spacing:-1.8px}.navInner{height:70px}.links{top:70px}}
+    @media(max-width:560px){.heroActions .btn{width:100%}.trustRow{display:grid;grid-template-columns:1fr 1fr}.phone{width:300px}.screen{min-height:590px}.mapTop{height:220px}.section{padding:60px 0}.logo{font-size:20px}.logoMark{width:38px;height:38px}.bookingPanel{padding:18px}.store{width:100%}}
+  </style>
+</head>
+<body>
+  <div class="nav">
+    <div class="container navInner">
+      <a class="logo" href="#top" aria-label="RideDotIn Home"><span class="logoMark">⚡</span><span>RideDotIn</span></a>
+      <nav class="links" id="navLinks">
+        <a href="#services">Services</a>
+        <a href="#book">Book Ride</a>
+        <a href="#captain">Become Rider</a>
+        <a href="#download">Download App</a>
+      </nav>
+      <button class="menuBtn" onclick="toggleMenu()">Menu</button>
+    </div>
+  </div>
+
+  <main id="top">
+    <section class="hero">
+      <div class="container heroGrid">
+        <div>
+          <span class="badge">⚡ Fast rides • Live tracking • Easy booking</span>
+          <h1>Book bike, e-riksha & bike lite rides in minutes.</h1>
+          <p>RideDotIn ka smart ride platform daily travel ko simple, affordable aur safe banata hai. Nearby rider, live location, transparent fare aur smooth pickup experience.</p>
+          <div class="heroActions">
+            <a class="btn btnDark" href="#book">Book a Ride</a>
+            <a class="btn btnPrimary" href="#captain">Earn with RideDotIn</a>
+          </div>
+          <div class="trustRow">
+            <div class="trustItem"><b>24/7</b><span>Ride support</span></div>
+            <div class="trustItem"><b>Live</b><span>Rider tracking</span></div>
+            <div class="trustItem"><b>Low</b><span>Estimated fares</span></div>
+          </div>
+        </div>
+
+        <div class="phoneScene" aria-label="Ride booking preview">
+          <div class="float one">2 min<small>Nearby rider</small></div>
+          <div class="float two">₹ Fair<small>Smart estimate</small></div>
+          <div class="float three">Safe<small>OTP pickup</small></div>
+          <div class="phone">
+            <div class="screen">
+              <div class="mapTop">
+                <div class="road r1"></div><div class="road r2"></div><div class="road r3"></div>
+                <div class="pin p1"></div><div class="pin p2"></div>
+              </div>
+              <div class="rideCard">
+                <div class="fromTo">
+                  <div class="field"><span class="dot"></span> Current location</div>
+                  <div class="field"><span class="dot end"></span> Where to?</div>
+                </div>
+                <div class="option"><div class="vehicle"><span class="vehicleIcon">🏍️</span> Bike</div><span class="price">₹49</span></div>
+                <div class="option"><div class="vehicle"><span class="vehicleIcon">🛺</span> E-Riksha</div><span class="price">₹79</span></div>
+                <div class="option"><div class="vehicle"><span class="vehicleIcon">⚡</span> Bike Lite</div><span class="price">₹39</span></div>
+                <button class="miniBtn" onclick="showToast('Ride booking app screen coming soon')">Confirm Ride</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="services">
+      <div class="container">
+        <div class="sectionHead">
+          <span class="eyebrow">Our Services</span>
+          <h2>Choose the ride that fits your day.</h2>
+          <p>Office jana ho, market trip ho ya quick pickup-drop, RideDotIn app ke through fast ride option mil sakta hai.</p>
+        </div>
+        <div class="cards">
+          <article class="card"><div class="cardIcon">🏍️</div><h3>Bike Ride</h3><p>Traffic me fast movement ke liye quick and budget-friendly bike ride option.</p></article>
+          <article class="card"><div class="cardIcon">🛺</div><h3>E-Riksha Ride</h3><p>Local area travel ke liye comfortable, affordable aur eco-friendly e-riksha option.</p></article>
+          <article class="card"><div class="cardIcon">⚡</div><h3>Bike Lite</h3><p>Short distance aur lowest fare ke liye simple, quick bike lite ride option.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="book">
+      <div class="container booking">
+        <div>
+          <span class="eyebrow">Quick Booking</span>
+          <h2>Plan your ride before opening the app.</h2>
+          <p>Yeh demo fare estimator homepage ke liye hai. Actual fare app/backend se distance, time aur city ke hisab se calculate hoga.</p>
+          <div class="earnList">
+            <div class="tick"><span>✓</span>Pickup & drop location add karo</div>
+            <div class="tick"><span>✓</span>Bike, e-riksha ya bike lite choose karo</div>
+            <div class="tick"><span>✓</span>OTP pickup aur live tracking support</div>
+          </div>
+        </div>
+        <form class="bookingPanel" onsubmit="estimateFare(event)">
+          <label for="pickup">Pickup location</label>
+          <input id="pickup" placeholder="Example: Siliguri Junction" required />
+          <label for="drop">Drop location</label>
+          <input id="drop" placeholder="Example: City Centre" required />
+          <label for="rideType">Ride type</label>
+          <select id="rideType"><option value="49">Bike Ride</option><option value="79">E-Riksha Ride</option><option value="39">Bike Lite</option></select>
+          <button class="btn btnPrimary" type="submit">Get Estimate</button>
+          <div class="fareBox" id="fareBox"></div>
+        </form>
+      </div>
+    </section>
+
+    <section class="section" id="captain">
+      <div class="container wide">
+        <div>
+          <span class="eyebrow">RideDotIn Rider</span>
+          <h2>Earn on your own time with simple rider onboarding.</h2>
+          <p>Rider app se online/offline status, live location, ride request, OTP flow aur earning tracking jaise features support kiye ja sakte hain.</p>
+          <div class="earnList">
+            <div class="tick"><span>✓</span>Flexible online/offline duty</div>
+            <div class="tick"><span>✓</span>Simple rider document verification</div>
+            <div class="tick"><span>✓</span>Live map visibility for approved riders</div>
+          </div>
+          <br />
+          <a class="btn btnDark" href="#download">Download Rider App</a>
+        </div>
+        <div class="wideArt"><div class="bike">🏍️</div></div>
+      </div>
+    </section>
+
+    <section class="section" id="safety">
+      <div class="container">
+        <div class="sectionHead">
+          <span class="eyebrow">Safety First</span>
+          <h2>Built for reliable local rides.</h2>
+          <p>Safety aur trust ke liye basic verification, live tracking aur notification flow ready rakha gaya hai.</p>
+        </div>
+        <div class="cards">
+          <article class="card"><div class="cardIcon">📍</div><h3>Live Tracking</h3><p>Approved rider ka live location ride flow me visible ho sakta hai jab rider online ho.</p></article>
+          <article class="card"><div class="cardIcon">🔐</div><h3>OTP Flow</h3><p>Ride start/complete ke liye OTP based trip flow add kiya gaya hai.</p></article>
+          <article class="card"><div class="cardIcon">✅</div><h3>Verified Riders</h3><p>Aadhaar, PAN, RC aur DL documents ke saath verified rider onboarding support.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="download">
+      <div class="container download">
+        <h2>Get the RideDotIn app experience.</h2>
+        <div class="storeBtns">
+          <button class="store" onclick="showToast('Customer app link add karna pending hai')">📱 Customer App</button>
+          <button class="store" onclick="showToast('Rider app link add karna pending hai')">🏍️ Rider App</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footerGrid">
+        <div><a class="logo" href="#top"><span class="logoMark">⚡</span><span>RideDotIn</span></a><p>Fast local rides, rider earning and smooth booking experience for your ride platform.</p></div>
+        <div><h3>Company</h3><a href="#services">Services</a><a href="#captain">Become Rider</a><a href="#safety">Safety</a><a href="#download">Download</a></div>
+        <div><h3>Support</h3><a href="mailto:support@ridedot.in">support@ridedot.in</a></div>
+      </div>
+      <div class="copy"><span>© <span id="year"></span> RideDotIn. All rights reserved.</span></div>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    function toggleMenu(){
+      document.getElementById('navLinks').classList.toggle('open');
+    }
+
+    function showToast(text){
+      const toast = document.getElementById('toast');
+      toast.textContent = text;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2600);
+    }
+
+    function estimateFare(event){
+      event.preventDefault();
+      const pickup = document.getElementById('pickup').value.trim();
+      const drop = document.getElementById('drop').value.trim();
+      const rideType = document.getElementById('rideType');
+      const base = Number(rideType.value);
+      const extra = Math.max(0, Math.min(70, (pickup.length + drop.length) * 2));
+      const estimate = base + extra;
+      const box = document.getElementById('fareBox');
+      box.style.display = 'block';
+      box.innerHTML = `Estimated ${rideType.options[rideType.selectedIndex].text}: ₹${estimate} - ₹${estimate + 25}<br><small>Demo estimate only. Actual fare backend/app se calculate hoga.</small>`;
+    }
+
+  </script>
+</body>
+</html>

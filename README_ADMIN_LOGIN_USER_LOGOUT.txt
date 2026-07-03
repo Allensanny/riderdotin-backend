@@ -1,0 +1,1 @@
+Admin panel update: after successful login login inputs are hidden, logged-in username badge and logout button are shown. Logout clears user ID/password and returns to login-only screen. Other admin document/live-map features unchanged.
